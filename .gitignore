@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# System
+.DS_Store
+
+# Local configuration
+.env
+.env.*
+
+# Utilities (project-local, not part of the browser)
+tools/

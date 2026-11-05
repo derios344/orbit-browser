@@ -1,0 +1,84 @@
+/* ORBIT — hoja de estilos principal.
+   Paleta: fondos carbón, texto azul grisáceo, acentos violetas
+   apagados y bordes discretos. */
+
+QMainWindow {
+    background-color: #1d2229;
+}
+
+QToolBar {
+    background-color: #232a33;
+    border: none;
+    border-bottom: 1px solid #313a46;
+    spacing: 6px;
+    padding: 6px 8px;
+}
+
+QToolButton {
+    background-color: transparent;
+    border: none;
+    border-radius: 5px;
+    color: #c8d0db;
+    padding: 6px;
+}
+
+QToolButton:hover {
+    background-color: #2e3742;
+}
+
+QToolButton:pressed {
+    background-color: #39444f;
+}
+
+QToolButton:disabled {
+    color: #5a6472;
+    background-color: transparent;
+}
+
+QLineEdit {
+    background-color: #1a1f25;
+    border: 1px solid #313a46;
+    border-radius: 6px;
+    color: #e6ebf2;
+    padding: 5px 10px;
+    selection-background-color: #6d5a8f;
+    selection-color: #ffffff;
+}
+
+QLineEdit:focus {
+    border-color: #8f79b8;
+}
+
+QStatusBar {
+    background-color: #232a33;
+    color: #8b95a5;
+    border-top: 1px solid #313a46;
+}
+
+QProgressBar {
+    background-color: #1a1f25;
+    border: 1px solid #313a46;
+    border-radius: 3px;
+}
+
+QProgressBar::chunk {
+    background-color: #a08cc9;
+    border-radius: 3px;
+}
+
+QToolButton#tabCloseButton {
+    background-color: transparent;
+    border: none;
+    border-radius: 4px;
+    color: #8b95a5;
+    padding: 1px 5px;
+}
+
+QToolButton#tabCloseButton:hover {
+    background-color: #2e3742;
+    color: #e6ebf2;
+}
+
+QToolButton#tabCloseButton:pressed {
+    background-color: #39444f;
+}
