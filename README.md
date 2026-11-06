@@ -32,6 +32,7 @@ ORBIT is not a clone of Chrome or Firefox. The goal is to build an independent, 
 - Links that request a new window (`target="_blank"`, `window.open`, Ctrl+clic) open in a new tab instead.
 - Address bar with direct navigation to `http://` and `https://` URLs.
 - Address bar falls back to a DuckDuckGo search for any other text.
+- **Start page**: a local HTML page (`resources/pages/home.html`) with an ORBIT search box that searches DuckDuckGo; the search is routed through the browser engine, the same path as the address bar.
 - `Ctrl+L` focuses and selects the address bar.
 - Back and forward navigation buttons, plus `Alt+Left` / `Alt+Right`.
 - Reload and stop buttons, plus `Ctrl+R`.
@@ -81,6 +82,8 @@ orbit-browser/
 │   └── chromium.py        # Chromium engine: the only module that knows
 │                          # Qt WebEngine (engine factory + expected interface)
 ├── resources/
+│   ├── pages/
+│   │   └── home.html      # Start page: ORBIT search box (DuckDuckGo)
 │   └── styles/
 │       └── main.qss       # Visual theme (Qt Style Sheets)
 ├── main.py                # Application entry point

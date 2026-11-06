@@ -7,6 +7,7 @@ interfaz que engine/chromium.py expone (load, back, forward, reload,
 stop, history y sus señales, incluida new_tab_requested).
 """
 
+from pathlib import Path
 from urllib.parse import quote
 
 from PySide6.QtCore import QSize, Qt, QUrl, Signal
@@ -24,27 +25,26 @@ from PySide6.QtWidgets import (
 
 from engine.chromium import create_engine
 
-# Página de inicio embebida como URL de datos: evita depender de
-# archivos externos y de la ruta desde la que se ejecuta ORBIT.
-HOME_PAGE = (
-    "data:text/html;charset=utf-8,"
-    "<html><head><meta charset='utf-8'><title>Inicio</title><style>"
-    "body{margin:0;font-family:'DejaVu Sans',sans-serif;"
-    "background:#1d2229;color:#c8d0db;display:flex;"
-    "align-items:center;justify-content:center;height:100vh;}"
-    ".card{text-align:center;}h1{font-size:2.6em;font-weight:600;"
-    "margin:0 0 .3em;color:#e6ebf2;letter-spacing:.08em;}"
-    "p{color:#8b95a5;font-size:.95em;}span{color:#a08cc9;}"
-    "</style></head><body><div class='card'>"
-    "<h1>ORBIT</h1>"
-    "<p>Escribí una dirección web o una búsqueda en la barra de direcciones.</p>"
-    "</div></body></html>"
+# Página de inicio: un archivo HTML local con el buscador de
+# DuckDuckGo. Se resuelve desde la ruta del proyecto para que funcione
+# desde cualquier directorio de trabajo.
+HOME_PAGE_PATH = (
+    Path(__file__).resolve().parent.parent / "resources" / "pages" / "home.html"
 )
+HOME_PAGE = QUrl.fromLocalFile(str(HOME_PAGE_PATH))
 
 SEARCH_URL = "https://duckduckgo.com/?q={query}"
 
 NEW_TAB_TITLE = "Nueva pestaña"
 MAX_TAB_TITLE_LENGTH = 32
+
+
+def _is_internal_url(url):
+    """True para URLs que no deben mostrarse en la barra de direcciones
+    (página de inicio local, data: y about:)."""
+    return url.scheme() in ("data", "about") or url.toLocalFile() == str(
+        HOME_PAGE_PATH
+    )
 
 
 class TabBar(QTabBar):
@@ -232,6 +232,9 @@ class MainWindow(QMainWindow):
         engine.new_tab_requested.connect(
             lambda requested_view: self._add_tab(view=requested_view)
         )
+        engine.search_requested.connect(
+            lambda query, e=engine: self._search(query, e)
+        )
         engine.urlChanged.connect(
             lambda url, e=engine: self._on_url_changed(url, e)
         )
@@ -246,7 +249,7 @@ class MainWindow(QMainWindow):
             lambda ok, e=engine: self._on_load_finished(ok, e)
         )
 
-        engine.load(url if url is not None else QUrl(HOME_PAGE))
+        engine.load(url if url is not None else HOME_PAGE)
         self._sync_close_buttons()
         self._refresh_current_tab_ui()
         self.address_bar.setFocus()
@@ -255,7 +258,7 @@ class MainWindow(QMainWindow):
     def _close_tab(self, index):
         """Cierra la pestaña `index`; la última no puede cerrarse."""
         if self.tabs.count() == 1:
-            self._add_tab(QUrl(HOME_PAGE))
+            self._add_tab(HOME_PAGE)
 
         engine = self.tabs.widget(index)
         self.tabs.removeTab(index)
@@ -314,9 +317,18 @@ class MainWindow(QMainWindow):
         if text.startswith(("http://", "https://")):
             url = QUrl(text)
         else:
-            url = QUrl(SEARCH_URL.format(query=quote(text)))
+            self._search(text)
+            return
 
         self.current_engine.load(url)
+
+    def _search(self, query, engine=None):
+        """Busca `query` en DuckDuckGo con el motor indicado (por
+        defecto, el de la pestaña activa)."""
+        engine = engine if engine is not None else self.current_engine
+        if engine is None:
+            return
+        engine.load(QUrl(SEARCH_URL.format(query=quote(query))))
 
     def _focus_address_bar(self):
         self.address_bar.setFocus()
@@ -340,7 +352,7 @@ class MainWindow(QMainWindow):
         if engine is not self.current_engine:
             return
         text = url.toString()
-        if text.startswith(("data:", "about:")):
+        if _is_internal_url(url):
             self.address_bar.clear()
         else:
             self.address_bar.setText(text)
@@ -410,7 +422,7 @@ class MainWindow(QMainWindow):
             self.reload_button.setEnabled(True)
 
         text = engine.url().toString()
-        if text.startswith(("data:", "about:")) or not text:
+        if _is_internal_url(engine.url()) or not text:
             self.address_bar.clear()
         else:
             self.address_bar.setText(text)

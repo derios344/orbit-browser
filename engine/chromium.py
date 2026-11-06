@@ -5,7 +5,7 @@ espera que el motor exponga al menos estos métodos y señales:
 
     - Métodos: load(url), back(), forward(), reload(), stop(), history()
     - Señales: urlChanged, titleChanged, loadStarted, loadProgress,
-      loadFinished, new_tab_requested(vista)
+      loadFinished, new_tab_requested(vista), search_requested(texto)
 
 new_tab_requested se emite cuando una página pide una ventana nueva
 (window.open, target="_blank", Ctrl+clic, ...): ORBIT la convierte en
@@ -16,9 +16,48 @@ con crear engine/servo.py que cumpla la misma interfaz y cambiar la
 importación aquí.
 """
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import QTimer, QUrl, QUrlQuery, Signal
 from PySide6.QtWebEngineCore import QWebEnginePage
 from PySide6.QtWebEngineWidgets import QWebEngineView
+
+
+class ChromiumPage(QWebEnginePage):
+    """Página que canaliza las búsquedas de la página de inicio.
+
+    El formulario de inicio envía la consulta a DuckDuckGo. En lugar de
+    dejar que el renderizador navegue por su cuenta, la petición se
+    intercepta y se emite search_requested: la ventana principal repite
+    la búsqueda con el motor (load), el mismo camino que usa la barra de
+    direcciones. Así la búsqueda funciona igual en cualquier entorno y
+    la URL final queda normalizada.
+    """
+
+    search_requested = Signal(str)
+
+    def acceptNavigationRequest(self, url, nav_type, is_main_frame):
+        is_form = (
+            nav_type
+            == QWebEnginePage.NavigationType.NavigationTypeFormSubmitted
+        )
+        if (
+            is_main_frame
+            and is_form
+            and url.host() in ("duckduckgo.com", "www.duckduckgo.com")
+            and url.path() in ("", "/")
+        ):
+            query = QUrlQuery(url).queryItemValue(
+                "q", QUrl.ComponentFormattingOption.FullyDecoded
+            )
+            # El envío de formularios codifica los espacios como '+'.
+            query = query.replace("+", " ").strip()
+            if query:
+                # Diferido: no se puede iniciar otra navegación dentro
+                # de acceptNavigationRequest.
+                QTimer.singleShot(
+                    0, lambda: self.search_requested.emit(query)
+                )
+                return False
+        return super().acceptNavigationRequest(url, nav_type, is_main_frame)
 
 
 class ChromiumView(QWebEngineView):
@@ -32,10 +71,14 @@ class ChromiumView(QWebEngineView):
     """
 
     new_tab_requested = Signal(object)
+    search_requested = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self._pending_view = None
+        self._page = ChromiumPage(self)
+        self._page.search_requested.connect(self.search_requested)
+        self.setPage(self._page)
 
     def createWindow(self, window_type):
         """Solicitud de ventana nueva: la convertimos en pestaña."""
