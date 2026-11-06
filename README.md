@@ -24,7 +24,7 @@ ORBIT is not a clone of Chrome or Firefox. The goal is to build an independent, 
 - Qt WebEngine (Chromium)
 - Qt Style Sheets (QSS) for the visual theme
 
-## Features — version 0.2.0
+## Features — version 0.3.1
 
 - Main ORBIT window.
 - Functional Qt WebEngine integration.
@@ -34,7 +34,7 @@ ORBIT is not a clone of Chrome or Firefox. The goal is to build an independent, 
 - Address bar falls back to a DuckDuckGo search for any other text.
 - **Start page**: a local HTML page (`resources/pages/home.html`) with an ORBIT search box that searches DuckDuckGo; the search is routed through the browser engine, the same path as the address bar.
 - `Ctrl+L` focuses and selects the address bar.
-- Back and forward navigation buttons, plus `Alt+Left` / `Alt+Right`.
+- Back and forward buttons (and `Alt+Left` / `Alt+Right`) that follow the active tab's history; both are enabled or disabled according to it.
 - Reload and stop buttons, plus `Ctrl+R`.
 - Basic loading indicator (progress bar) that follows the active tab.
 - Tab titles and window title update with the page title of each tab.
@@ -64,9 +64,11 @@ source .venv/bin/activate
 python main.py
 ```
 
-Type a URL (starting with `http://` or `https://`) or any search text in the address bar and press Enter.
+Type a URL (starting with `http://` or `https://`) or any search text in the address bar and press Enter. The start page also has a search box that queries DuckDuckGo.
 
-Tabs: press `Ctrl+T` or the `+` button on the tab bar to open a new tab, and `Ctrl+W` (or the close button) to close one. Links that open in a new window open as a new tab. `Alt+Left` / `Alt+Right` navigate back and forward, and `Ctrl+L` focuses the address bar.
+Tabs: press `Ctrl+T` or the `+` button on the tab bar to open a new tab, and `Ctrl+W` (or the close button) to close one. Links that open in a new window open as a new tab. The back and forward buttons (or `Alt+Left` / `Alt+Right`) move through the active tab's history, and `Ctrl+L` focuses the address bar.
+
+The version number lives in `version.py` and is exposed as `QApplication.applicationVersion()`; keep it in sync with this README.
 
 ## Project structure
 
@@ -87,6 +89,7 @@ orbit-browser/
 │   └── styles/
 │       └── main.qss       # Visual theme (Qt Style Sheets)
 ├── main.py                # Application entry point
+├── version.py             # Single source of truth for the version number
 ├── requirements.txt
 ├── README.md
 └── LICENSE
@@ -96,15 +99,17 @@ orbit-browser/
 
 Future phases (not implemented yet):
 
-- 0.3.0 — Browsing history
 - 0.4.0 — Bookmarks
-- Later — Downloads, extensions, additional rendering engines, experimental features
+- 0.5.0 — Downloads
+- Later — Browsing history, extensions, additional rendering engines, experimental features
 
 ## Version history
 
+- **0.3.1** — Fix: the back, forward, reload and stop toolbar buttons are now connected to their handlers; back and forward check the tab history before navigating, and the buttons refresh on every URL change and tab switch.
+- **0.3.0** — Start page: local HTML start page with a DuckDuckGo search box routed through the engine, and a single `_search()` path shared with the address bar.
 - **0.2.0** — Tabs: multi-tab navigation, tab bar with new-tab button, keyboard shortcuts, and new-window requests opening as tabs.
 - **0.1.0** — Foundation: main window, Qt WebEngine integration, address bar with search fallback, back/forward/reload/stop, loading indicator, dark theme.
 
 ## Current status
 
-Phase 2 (0.2.0) — Tabs. See the features list above. Browsing history, bookmarks, downloads, AI features and ad blocking are not part of this version.
+Phase 3 (0.3.1) — Start page and working navigation controls. See the features list above. Browsing history, bookmarks, downloads, AI features and ad blocking are not part of this version.

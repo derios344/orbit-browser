@@ -6,6 +6,7 @@ from pathlib import Path
 from PySide6.QtWidgets import QApplication
 
 from browser.window import MainWindow
+from version import __version__
 
 
 def load_styles(app):
@@ -20,6 +21,7 @@ def load_styles(app):
 def main():
     app = QApplication(sys.argv)
     app.setApplicationName("ORBIT")
+    app.setApplicationVersion(__version__)
     app.setOrganizationName("ORBIT")
 
     load_styles(app)
