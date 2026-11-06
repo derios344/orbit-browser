@@ -164,6 +164,11 @@ class MainWindow(QMainWindow):
             QStyle.StandardPixmap.SP_BrowserStop, "Detener"
         )
 
+        self.back_button.clicked.connect(self._back_current_tab)
+        self.forward_button.clicked.connect(self._forward_current_tab)
+        self.reload_button.clicked.connect(self._reload_current_tab)
+        self.stop_button.clicked.connect(self._stop_current_tab)
+
         toolbar.addWidget(self.back_button)
         toolbar.addWidget(self.forward_button)
         toolbar.addWidget(self.reload_button)
@@ -338,13 +343,21 @@ class MainWindow(QMainWindow):
         if self.current_engine is not None:
             self.current_engine.reload()
 
-    def _back_current_tab(self):
+    def _stop_current_tab(self):
         if self.current_engine is not None:
-            self.current_engine.back()
+            self.current_engine.stop()
+
+    def _back_current_tab(self):
+        engine = self.current_engine
+        if engine is not None and engine.history().canGoBack():
+            engine.back()
+            self._update_navigation_buttons()
 
     def _forward_current_tab(self):
-        if self.current_engine is not None:
-            self.current_engine.forward()
+        engine = self.current_engine
+        if engine is not None and engine.history().canGoForward():
+            engine.forward()
+            self._update_navigation_buttons()
 
     # ---- Señales del motor ----
 
@@ -356,6 +369,7 @@ class MainWindow(QMainWindow):
             self.address_bar.clear()
         else:
             self.address_bar.setText(text)
+        self._update_navigation_buttons()
 
     def _on_title_changed(self, title, engine):
         index = self.tabs.indexOf(engine)
@@ -439,6 +453,14 @@ class MainWindow(QMainWindow):
             self.setWindowTitle("ORBIT")
 
     def _update_navigation_buttons(self):
-        history = self.current_engine.history()
+        """Habilita Atrás/Adelante según el historial de la pestaña
+        activa. Se llama al cambiar de URL (también al retroceder o
+        avanzar), al terminar una carga y al cambiar de pestaña."""
+        engine = self.current_engine
+        if engine is None:
+            self.back_button.setEnabled(False)
+            self.forward_button.setEnabled(False)
+            return
+        history = engine.history()
         self.back_button.setEnabled(history.canGoBack())
         self.forward_button.setEnabled(history.canGoForward())
